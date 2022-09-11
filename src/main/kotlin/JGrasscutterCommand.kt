@@ -40,7 +40,7 @@ object JGrasscutterCommand : KotlinPlugin(
     JvmPluginDescription(
         id = "top.jie65535.mirai.grasscutter-command",
         name = "J Grasscutter Command",
-        version = "0.1.0",
+        version = "0.2.0",
     ) {
         author("jie65535")
         info("""聊天执行GC命令""")
