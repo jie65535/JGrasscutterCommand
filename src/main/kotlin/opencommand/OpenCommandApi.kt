@@ -26,13 +26,13 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import top.jie65535.mirai.utils.UnsafeOkHttpClient
 
 @OptIn(ExperimentalSerializationApi::class)
 object OpenCommandApi {
-    private val httpClient = OkHttpClient.Builder().build()
+    private val httpClient = UnsafeOkHttpClient.getUnsafeOkHttpClient().build()
     private val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
