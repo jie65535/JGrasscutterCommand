@@ -49,4 +49,9 @@ object PluginConfig : AutoSavePluginConfig("config") {
 
         // TODO ...
     ))
+
+    @ValueDescription("公开命令，无需绑定账号也可以执行（可用别名）（必须绑定了控制台令牌才可使用）")
+    val publicCommand: MutableSet<String> by value(mutableSetOf(
+        "/list", "/list uid"
+    ))
 }
