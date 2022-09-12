@@ -123,6 +123,9 @@ commandAlias:
   解锁地图: '/prop unlockmap 1'
   位置: '/pos'
   坐标: '/pos'
+publicCommands:
+  - '/list'
+  - '/list uid'
 ```
 
 # 指令列表
@@ -159,10 +162,12 @@ commandAlias:
 /jgc disable [group]    # 禁用指定群执行，在群内执行可忽略群参数
 ```
 
-## 命令别名相关
+## 命令相关
 ```shell
 /jgc setCommand <alias> <command>   # 添加命令别名
 /jgc removeCommand <alias>          # 删除命令别名
+/jgc addPublicCommand <command>     # 添加公开命令（可用别名）（游客可用）
+/jgc removePublicCommand <command>  # 删除公开命令
 ```
 
 # 实体结构
