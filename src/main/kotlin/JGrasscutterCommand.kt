@@ -40,7 +40,7 @@ object JGrasscutterCommand : KotlinPlugin(
     JvmPluginDescription(
         id = "top.jie65535.mirai.grasscutter-command",
         name = "J Grasscutter Command",
-        version = "0.2.0",
+        version = "0.2.1",
     ) {
         author("jie65535")
         info("""聊天执行GC命令""")
@@ -130,11 +130,17 @@ object JGrasscutterCommand : KotlinPlugin(
                     // 普通用户
                     user = PluginData.users.find { it.id == sender.id && it.serverId == server.id }
                     if (user == null || user.token.isEmpty()) {
-                        return@subscribeAlways
+                        if (server.consoleToken.isNotEmpty() && PluginConfig.publicCommand.contains(command)) {
+                            logger.info("游客用户 ${sender.nameCardOrNick}(${sender.id}) 执行公开命令：$command")
+                            server.consoleToken
+                        } else {
+                            return@subscribeAlways
+                        }
+                    } else {
+                        logger.info("用户 ${sender.nameCardOrNick}(${sender.id}) 执行命令：$command")
+                        // 使用用户缓存令牌
+                        user.token
                     }
-                    logger.info("用户 ${sender.nameCardOrNick}(${sender.id}) 执行命令：$command")
-                    // 使用用户缓存令牌
-                    user.token
                 }
                 try {
                     // 调用接口执行命令
