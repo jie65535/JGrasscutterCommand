@@ -130,7 +130,7 @@ object JGrasscutterCommand : KotlinPlugin(
                     // 普通用户
                     user = PluginData.users.find { it.id == sender.id && it.serverId == server.id }
                     if (user == null || user.token.isEmpty()) {
-                        if (server.consoleToken.isNotEmpty() && PluginConfig.publicCommand.contains(command)) {
+                        if (server.consoleToken.isNotEmpty() && PluginConfig.publicCommands.contains(command)) {
                             logger.info("游客用户 ${sender.nameCardOrNick}(${sender.id}) 执行公开命令：$command")
                             server.consoleToken
                         } else {

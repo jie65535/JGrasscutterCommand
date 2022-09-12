@@ -329,13 +329,13 @@ object PluginCommands : CompositeCommand(
     @SubCommand
     @Description("添加公开命令（游客可执行）（可用别名）")
     suspend fun CommandSender.addPublicCommand(command: String) {
-        PluginConfig.publicCommand.add(command)
+        PluginConfig.publicCommands.add(command)
         sendMessage("OK")
     }
     @SubCommand
     @Description("删除公开命令")
     suspend fun CommandSender.removePublicCommand(alias: String) {
-        PluginConfig.publicCommand.remove(alias)
+        PluginConfig.publicCommands.remove(alias)
         sendMessage("OK")
     }
 
