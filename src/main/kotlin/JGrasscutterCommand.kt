@@ -105,17 +105,8 @@ object JGrasscutterCommand : KotlinPlugin(
             // 处理执行游戏命令
             else if (message.startsWith(PluginConfig.commandPrefix)) {
                 var command = message.removePrefix(PluginConfig.commandPrefix).trim()
-                if (command.isEmpty()) {
+                if (command.isEmpty() || (command[0] == '/' && command.length == 1)) {
                     return@subscribeAlways
-                }
-                // 检查是否使用别名
-                val t = PluginConfig.commandAlias[command]
-                if (!t.isNullOrEmpty()) command = t
-                // 如果是斜杠开头，则移除斜杠，在控制台执行不需要斜杠
-                if (command[0] == '/') {
-                    command = command.substring(1)
-                    if (command.isEmpty())
-                        return@subscribeAlways
                 }
 
                 // 执行的用户
@@ -142,6 +133,12 @@ object JGrasscutterCommand : KotlinPlugin(
                         user.token
                     }
                 }
+                // 检查是否使用别名
+                val t = PluginConfig.commandAlias[command]
+                if (!t.isNullOrEmpty()) command = t
+                // 如果是斜杠开头，则移除斜杠，在控制台执行不需要斜杠
+                if (command[0] == '/') command = command.substring(1)
+
                 try {
                     // 调用接口执行命令
                     val response = OpenCommandApi.runCommand(server.address, token, command)

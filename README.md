@@ -113,19 +113,20 @@ bindCommand: 绑定
 commandPrefix: !
 # 命令别名
 commandAlias: 
-  无敌: '/prop god on'
-  关闭无敌: '/prop god off'
-  无限体力: '/prop ns on'
-  关闭无限体力: '/prop ns off'
-  无限能量: '/prop ue on'
-  关闭无限能量: '/prop ue off'
-  点亮地图: '/prop unlockmap 1'
-  解锁地图: '/prop unlockmap 1'
-  位置: '/pos'
-  坐标: '/pos'
+  无敌: 'prop god on'
+  关闭无敌: 'prop god off'
+  无限体力: 'prop ns on'
+  关闭无限体力: 'prop ns off'
+  无限能量: 'prop ue on'
+  关闭无限能量: 'prop ue off'
+  点亮地图: 'prop unlockmap 1'
+  解锁地图: 'prop unlockmap 1'
+  位置: 'pos'
+  坐标: 'pos'
+# 公开命令，无需绑定账号也可以执行（可用别名）（必须绑定了控制台令牌才可使用）
 publicCommands:
-  - '/list'
-  - '/list uid'
+  - 'list'
+  - 'list uid'
 ```
 
 # 指令列表

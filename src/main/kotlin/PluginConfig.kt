@@ -36,22 +36,22 @@ object PluginConfig : AutoSavePluginConfig("config") {
 
     @ValueDescription("命令别名")
     val commandAlias: MutableMap<String, String> by value(mutableMapOf(
-        "无敌" to "/prop god on",
-        "关闭无敌" to "/prop god off",
-        "无限体力" to "/prop ns on",
-        "关闭无限体力" to "/prop ns off",
-        "无限能量" to "/prop ue on",
-        "关闭无限能量" to "/prop ue off",
-        "点亮地图" to "/prop unlockmap 1",
-        "解锁地图" to "/prop unlockmap 1",
-        "位置" to "/pos",
-        "坐标" to "/pos",
+        "无敌" to "prop god on",
+        "关闭无敌" to "prop god off",
+        "无限体力" to "prop ns on",
+        "关闭无限体力" to "prop ns off",
+        "无限能量" to "prop ue on",
+        "关闭无限能量" to "prop ue off",
+        "点亮地图" to "prop unlockmap 1",
+        "解锁地图" to "prop unlockmap 1",
+        "位置" to "pos",
+        "坐标" to "pos",
 
         // TODO ...
     ))
 
     @ValueDescription("公开命令，无需绑定账号也可以执行（可用别名）（必须绑定了控制台令牌才可使用）")
     val publicCommands: MutableSet<String> by value(mutableSetOf(
-        "/list", "/list uid"
+        "list", "list uid"
     ))
 }
