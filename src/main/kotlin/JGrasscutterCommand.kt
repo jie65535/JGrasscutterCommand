@@ -40,7 +40,7 @@ object JGrasscutterCommand : KotlinPlugin(
     JvmPluginDescription(
         id = "top.jie65535.mirai.grasscutter-command",
         name = "J Grasscutter Command",
-        version = "0.2.1",
+        version = "0.3.0",
     ) {
         author("jie65535")
         info("""聊天执行GC命令""")
@@ -53,18 +53,24 @@ object JGrasscutterCommand : KotlinPlugin(
 
         val eventChannel = GlobalEventChannel.parentScope(this)
         // 监听群消息
-        eventChannel.subscribeAlways<GroupMessageEvent> {
+        eventChannel.subscribeAlways<MessageEvent> {
             // 忽略被拉黑的用户发送的消息
             if (PluginConfig.blacklist.contains(sender.id))
                 return@subscribeAlways
 
-            // 忽略未启用的群消息
-            val groupConfig = PluginData.groups.find { it.id == group.id }
-            if (groupConfig == null || !groupConfig.isEnabled)
-                return@subscribeAlways
+            val server = if (this is GroupMessageEvent) {
+                // 若为群消息，忽略未启用的群
+                val groupConfig = PluginData.groups.find { it.id == group.id }
+                if (groupConfig == null || !groupConfig.isEnabled)
+                    return@subscribeAlways
+                // 获取群绑定的服务器
+                PluginData.servers.find { it.id == groupConfig.serverId }
+            } else {
+                // 否则为私聊消息，使用默认服务器
+                PluginData.servers.find { it.id == PluginConfig.defaultServerId }
+            }
 
             // 忽略未启用的服务器
-            val server = PluginData.servers.find { it.id == groupConfig.serverId }
             if (server == null || !server.isEnabled)
                 return@subscribeAlways
 

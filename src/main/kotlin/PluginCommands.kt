@@ -242,13 +242,26 @@ object PluginCommands : CompositeCommand(
         }
     }
 
+    @SubCommand
+    @Description("设置默认服务器（初始值为首个创建的服务器）")
+    suspend fun CommandSender.setDefaultServer(id: Int) {
+        val server = PluginData.servers.find { it.id == id }
+        if (server == null) {
+            sendMessage("未找到指定服务器")
+        } else {
+            PluginConfig.defaultServerId = id
+            logger.info("已将 [$id] ${server.name} 设置为默认服务器")
+            sendMessage("OK")
+        }
+    }
+
     // endregion 服务器相关命令
 
     // region 群相关命令
 
     @SubCommand("linkGroup", "bindGroup", "addGroup")
-    @Description("绑定服务器到群")
-    suspend fun CommandSender.linkGroup(serverId: Int, group: Group? = getGroupOrNull()) {
+    @Description("绑定服务器到群，若未指定服务器则使用默认服务器ID")
+    suspend fun CommandSender.linkGroup(serverId: Int = PluginConfig.defaultServerId, group: Group? = getGroupOrNull()) {
         if (group == null) {
             sendMessage("必须指定群")
             return
@@ -256,7 +269,7 @@ object PluginCommands : CompositeCommand(
 
         val server = PluginData.servers.find { it.id == serverId }
         if (server == null) {
-            sendMessage("指定服务器ID不存在，请先添加服务器(使用addServer子命令)")
+            sendMessage("指定服务器不存在，请先添加服务器(使用addServer子命令)")
             return
         }
 
@@ -272,14 +285,23 @@ object PluginCommands : CompositeCommand(
     }
 
     @SubCommand
-    @Description("启用指定群执行")
+    @Description("启用指定群执行，若未绑定，则自动绑定到默认服务器")
     suspend fun CommandSender.enable(group: Group? = getGroupOrNull()) {
         if (group == null) {
             sendMessage("必须指定群")
         } else {
             val g = PluginData.groups.find { it.id == group.id }
             if (g == null) {
-                sendMessage("请先绑定群到服务器(使用linkGroup子命令)")
+                // 当启用的群是未初始化的群时，使用默认服务器进行初始化
+                val server = PluginData.servers.find { it.id == PluginConfig.defaultServerId }
+                if (server != null) {
+                    // 绑定到默认服务器
+                    logger.info("将默认服务器[${server.id}] ${server.name} ${server.address} 绑定到群 ${group.name}(${group.id})")
+                    PluginData.groups.add(GroupConfig(group.id, server.id))
+                    sendMessage("OK，已绑定到默认服务器")
+                } else {
+                    sendMessage("请先绑定群到服务器(使用linkGroup子命令)")
+                }
             } else {
                 logger.info("启用插件在群 ${group.name}(${group.id})")
                 g.isEnabled = true

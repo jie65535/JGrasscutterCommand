@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "top.jie65535.mirai"
-version = "0.2.1"
+version = "0.3.0"
 
 repositories {
     maven("https://maven.aliyun.com/repository/public")

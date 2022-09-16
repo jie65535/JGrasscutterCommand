@@ -54,4 +54,8 @@ object PluginConfig : AutoSavePluginConfig("config") {
     val publicCommands: MutableSet<String> by value(mutableSetOf(
         "list", "list uid"
     ))
+
+    @ValueDescription("默认服务器ID，未指定服务器ID的命令将使用默认服务器执行。\n" +
+            "私聊默认使用该服务器。")
+    var defaultServerId: Int by value(1)
 }

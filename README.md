@@ -12,7 +12,7 @@ Mirai机器人相关文档请参阅 [用户手册](https://github.com/mamoe/mira
 ## 首先使用指令添加一个服务器
 ```shell
 # 用法
-/jgc addServer <address> [name] [description]   # 添加服务器
+/jgc addServer <address> [name] [description]   # 添加服务器，首个服务器为默认服务器，可切换默认服务器
 # 示例
 /jgc addServer http://127.0.0.1:443 测试服 本地测试服务器
 # 成功返回 "服务器已添加，ID为[1]，使用servers子命令查看服务器列表"
@@ -33,18 +33,22 @@ Mirai机器人相关文档请参阅 [用户手册](https://github.com/mamoe/mira
 ## 将服务器绑定到机器人所在群聊
 ```shell
 # 用法
-/jgc linkGroup/bindGroup/addGroup <serverId> [group]   # 绑定服务器到群，在群内执行可忽略群参数
+/jgc linkGroup/bindGroup/addGroup [serverId] [group]   # 绑定服务器到群，若未指定服务器则使用默认服务器ID，在群内执行可忽略群参数
 # 示例（控制台）
-/jgc linkGroup 1 群号
+/jgc linkGroup 1 123456 # 指定将服务器[1]绑定到群[123456]
 # 示例（群里）
-/jgc linkGroup 1
+/jgc linkGroup 1 # 指定绑定到服务器[1]
+/jgc linkGroup   # 忽略服务器参数，将使用默认服务器
+/jgc enable      # 若启用的群未绑定，将自动绑定到默认服务器
 # 成功返回 "OK"
 ```
 在聊天环境执行 Mirai-Console 命令需要另一个插件 [Chat Command](https://github.com/project-mirai/chat-command)
 执行GC命令不需要这个，见后文
 
 ## 绑定账号
-玩家想要在群里执行命令，需要绑定自己的游戏UID，需要在群里发送 `绑定 <uid>` 来向目标账号发送验证码，然后将验证码发到群里完成验证，如图所示
+玩家想要在群里执行命令，需要绑定自己的游戏UID，
+需要在群里发送 `绑定 <uid>` 来向目标账号发送验证码，
+然后将验证码发到群里完成验证，如图所示
 
 ![群内验证示例图](screenshot/verification.png)
 
@@ -78,6 +82,10 @@ _可以通过 `/jgc setBindCommand <prefix>` 来修改执行命令前缀 _（例
 例如：`!permission list @张三`，其中`@张三`会被替换成其绑定的UID
 
 ![At群员示例图](screenshot/runAt.png)
+
+## 私聊执行
+v0.3.0 开始，玩家可以**私聊机器人**进行账号的绑定和命令的执行，
+但是目前只能在**默认服务器**中执行，无法指定执行的服务器。 
 
 ## 拉黑用户
 如果你想禁止某个用户使用本插件执行命令，可以使用 `/ban <qq>` 来拉黑，使用 `/unban <qq>` 可以解除黑名单
@@ -127,6 +135,9 @@ commandAlias:
 publicCommands:
   - 'list'
   - 'list uid'
+# 默认服务器ID，未指定服务器ID的命令将使用默认服务器执行。
+# 私聊默认使用该服务器。
+defaultServerId: 1
 ```
 
 # 指令列表
@@ -158,8 +169,8 @@ publicCommands:
 
 ## 群相关
 ```shell
-/jgc linkGroup/bindGroup/addGroup <serverId> [group]   # 绑定服务器到群，在群内执行可忽略群参数
-/jgc enable [group]     # 启用指定群执行，在群内执行可忽略群参数
+/jgc linkGroup/bindGroup/addGroup [serverId] [group]   # 绑定服务器到群，若未指定服务器则使用默认服务器ID，在群内执行可忽略群参数
+/jgc enable [group]     # 启用指定群执行，若未绑定，则自动绑定到默认服务器，在群内执行可忽略群参数
 /jgc disable [group]    # 禁用指定群执行，在群内执行可忽略群参数
 ```
 
