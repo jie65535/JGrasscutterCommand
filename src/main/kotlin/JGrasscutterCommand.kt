@@ -75,7 +75,7 @@ object JGrasscutterCommand : KotlinPlugin(
                 return@subscribeAlways
 
             // 解析消息
-            val message = this.message.joinToString("") {
+            var message = this.message.joinToString("") {
                 if (it is At) {
                     // 替换@群员为@其绑定的Uid
                     val user = PluginData.users.find { user -> user.id == it.target && user.serverId == server.id }
@@ -110,10 +110,17 @@ object JGrasscutterCommand : KotlinPlugin(
             }
             // 处理执行游戏命令
             else if (message.startsWith(PluginConfig.commandPrefix)) {
-                var command = message.removePrefix(PluginConfig.commandPrefix).trim()
-                if (command.isEmpty() || (command[0] == '/' && command.length == 1)) {
+                message = message.removePrefix(PluginConfig.commandPrefix).trim()
+                if (message.isEmpty() || (message[0] == '/' && message.length == 1)) {
                     return@subscribeAlways
                 }
+
+                // 检查是否使用别名
+                var command = PluginConfig.commandAlias[message]
+                if (command.isNullOrEmpty())
+                    command = message
+                // 如果是斜杠开头，则移除斜杠，在控制台执行不需要斜杠
+                if (command[0] == '/') command = command.substring(1)
 
                 // 执行的用户
                 var user: User? = null
@@ -127,7 +134,11 @@ object JGrasscutterCommand : KotlinPlugin(
                     // 普通用户
                     user = PluginData.users.find { it.id == sender.id && it.serverId == server.id }
                     if (user == null || user.token.isEmpty()) {
-                        if (server.consoleToken.isNotEmpty() && PluginConfig.publicCommands.contains(command)) {
+                        if (server.consoleToken.isNotEmpty()                         // 仅服务器绑定了控制台令牌时
+                            && (PluginConfig.publicCommands.contains(command)        // 检测执行的命令是否为公开命令
+                                    || PluginConfig.publicCommands.contains(message) // 检测执行命令的原文是否为公开命令
+                                    )) {
+                            // 允许游客执行控制台命令
                             logger.info("游客用户 ${sender.nameCardOrNick}(${sender.id}) 执行公开命令：$command")
                             server.consoleToken
                         } else {
@@ -139,11 +150,6 @@ object JGrasscutterCommand : KotlinPlugin(
                         user.token
                     }
                 }
-                // 检查是否使用别名
-                val t = PluginConfig.commandAlias[command]
-                if (!t.isNullOrEmpty()) command = t
-                // 如果是斜杠开头，则移除斜杠，在控制台执行不需要斜杠
-                if (command[0] == '/') command = command.substring(1)
 
                 try {
                     // 调用接口执行命令
