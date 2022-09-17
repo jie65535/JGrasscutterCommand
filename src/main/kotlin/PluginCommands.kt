@@ -332,7 +332,13 @@ object PluginCommands : CompositeCommand(
     // region 命令别名部分
 
     @SubCommand
-    @Description("添加命令别名")
+    @Description("列出所有别名")
+    suspend fun CommandSender.listCommands() {
+        sendMessage(PluginConfig.commandAlias.map { "[${it.key}] ${it.value}" }.joinToString())
+    }
+
+    @SubCommand
+    @Description("添加命令别名，多条命令用|隔开")
     suspend fun CommandSender.setCommand(alias: String, vararg command: String) {
         if (alias.isEmpty() || command.isEmpty() || command[0].isEmpty()) {
             sendMessage("参数不能为空")

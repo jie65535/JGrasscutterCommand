@@ -1,11 +1,17 @@
 # J Grasscutter Command
-# 在QQ群里远程执行命令的插件
+
+This repo is only used for the Chinese social software QQ, so only the Chinese version is available.
+
+# 用QQ执行GC命令的机器人插件
 
 - 基于 [Mirai-Console](https://github.com/mamoe/mirai-console) 开发的插件
-- 服务端必须使用 [OpenCommand](https://github.com/jie65535/gc-opencommand-plugin) 插件
+> Mirai机器人相关文档请参阅 [用户手册](https://github.com/mamoe/mirai/blob/dev/docs/UserManual.md)，
+> 本项目**不会教你**如何安装和登录机器人，请自行了解Mirai相关信息。_目前暂不考虑其它框架或平台，有意者可自行移植_
 
-Mirai机器人相关文档请参阅 [用户手册](https://github.com/mamoe/mirai/blob/dev/docs/UserManual.md)，
-本项目**不会教你**如何安装和登录机器人，请自行了解Mirai相关信息。
+- 服务端必须使用 [OpenCommand](https://github.com/jie65535/gc-opencommand-plugin) 插件
+- 若使用后觉得满意，可以给我一个 Star 作为鼓励 ; )
+- 若有问题或者建议，欢迎提出 Issue 进行反馈。
+- 建议 Watch 本项目以接收更新推送。
 
 # 插件用法
 
@@ -82,6 +88,24 @@ _可以通过 `/jgc setBindCommand <prefix>` 来修改执行命令前缀 _（例
 例如：`!permission list @张三`，其中`@张三`会被替换成其绑定的UID
 
 ![At群员示例图](screenshot/runAt.png)
+
+---
+
+你还可以一次性执行多条命令，并且可以通过在别名中设置多行命令来实现组合命令
+
+例如：
+```shell
+!give 102 9999
+give 203 999
+```
+![多行命令示例图](screenshot/batch.jpg)
+
+还可以设置别名为多条命令，用`|`分隔，例如：
+
+`/jgc setCommand 新手礼包 give 102 9999｜give 202 99｜give 203 99`
+
+然后通过别名批量执行命令，例如：`!新手礼包`
+
 
 ## 私聊执行
 v0.3.0 开始，玩家可以**私聊机器人**进行账号的绑定和命令的执行，
@@ -176,7 +200,8 @@ defaultServerId: 1
 
 ## 命令相关
 ```shell
-/jgc setCommand <alias> <command>   # 添加命令别名
+/jgc listCommands                   # 列出所有别名
+/jgc setCommand <alias> <command>   # 添加命令别名（聊天执行可传多行命令）
 /jgc removeCommand <alias>          # 删除命令别名
 /jgc addPublicCommand <command>     # 添加公开命令（可用别名）（游客可用）
 /jgc removePublicCommand <command>  # 删除公开命令

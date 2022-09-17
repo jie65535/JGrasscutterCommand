@@ -111,16 +111,16 @@ object JGrasscutterCommand : KotlinPlugin(
             // 处理执行游戏命令
             else if (message.startsWith(PluginConfig.commandPrefix)) {
                 message = message.removePrefix(PluginConfig.commandPrefix).trim()
-                if (message.isEmpty() || (message[0] == '/' && message.length == 1)) {
+                if (message.isEmpty()) {
                     return@subscribeAlways
                 }
 
                 // 检查是否使用别名
                 var command = PluginConfig.commandAlias[message]
-                if (command.isNullOrEmpty())
-                    command = message
-                // 如果是斜杠开头，则移除斜杠，在控制台执行不需要斜杠
-                if (command[0] == '/') command = command.substring(1)
+                command = if (command.isNullOrEmpty())
+                    message
+                else
+                    command.replace('|', '\n') // 若为多行命令，替换为换行
 
                 // 执行的用户
                 var user: User? = null
@@ -153,12 +153,8 @@ object JGrasscutterCommand : KotlinPlugin(
 
                 try {
                     // 调用接口执行命令
-                    val response = OpenCommandApi.runCommand(server.address, token, command)
-                    if (response.isNullOrEmpty()) {
-                        subject.sendMessage(this.message.quote() + "OK")
-                    } else {
-                        subject.sendMessage(this.message.quote() + response)
-                    }
+                    val response = OpenCommandApi.runCommands(server.address, token, command)
+                    subject.sendMessage(this.message.quote() + response)
                     if (user != null) {
                         // 计数并更新最后运行时间
                         ++user.runCount
@@ -193,7 +189,7 @@ object JGrasscutterCommand : KotlinPlugin(
             // 否则如果启用了同步消息，且控制台令牌不为空，且为群消息时
             else if (server.consoleToken.isNotEmpty() && server.syncMessage && this is GroupMessageEvent) {
                 try {
-                    OpenCommandApi.runCommand(
+                    OpenCommandApi.runCommands(
                         server.address,
                         server.consoleToken,
                         "say <color=green>${sender.nameCardOrNick}</color>:\n${this.message.contentToString()}")

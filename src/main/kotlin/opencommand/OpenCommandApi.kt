@@ -140,13 +140,47 @@ object OpenCommandApi {
 
     /**
      * 运行命令，成功时返回命令执行结果，失败时抛出异常，异常详情参考doRequest描述
+     * 允许单次执行多条命令，用换行(\n)分隔
      * @param host 服务器地址
      * @param token 持久令牌
-     * @param command 命令行
+     * @param rawCommands 命令行
      * @return 命令执行结果
      * @see doRequest
      */
-    suspend fun runCommand(host: String, token: String, command: String): String? {
-        return doRequest(host, json.encodeToString(CommandRequest(token, command)))
+    suspend fun runCommands(host: String, token: String, rawCommands: String): String {
+        // 去除首尾空白、命令前缀。使用api执行命令不需要前缀
+        val commands = rawCommands.splitToSequence('\n')
+            .map { it.trim().trimStart('/').trimStart('!') }
+            .toList()
+        return if (commands.isEmpty())
+            throw IllegalArgumentException("命令不能为空！")
+        else if (commands.size == 1) {
+            val ret = doRequest(host, json.encodeToString(CommandRequest(token, commands[0])))
+            if (ret.isNullOrEmpty()) "OK" else ret
+        } else {
+            val msg = StringBuilder()
+            var okCount = 0
+            for (cmd in commands) {
+                val ret = doRequest(host, json.encodeToString(CommandRequest(token, cmd)))
+                if (ret.isNullOrEmpty()) {
+                    if (okCount++ == 0)
+                        msg.append("OK")
+                } else {
+                    if (okCount > 0) {
+                        if (okCount > 1) {
+                            msg.append('*').append(okCount)
+                        }
+                        msg.appendLine()
+                        okCount = 0
+                    }
+                    msg.appendLine(ret)
+                }
+            }
+            if (okCount > 1) // OK*n
+                msg.append('*').append(okCount)
+            else if (msg[msg.length-1] == '\n') // 移除额外的换行
+                msg.deleteCharAt(msg.length-1)
+            msg.toString()
+        }
     }
 }
