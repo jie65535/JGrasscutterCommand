@@ -184,8 +184,8 @@ object JGrasscutterCommand : KotlinPlugin(
                     logger.warning("${sender.nameCardOrNick}(${sender.id}) 在执行命令时发生异常", e)
                 }
             }
-            // 否则如果启用了同步消息，且控制台令牌不为空
-            else if (server.consoleToken.isNotEmpty() && server.syncMessage) {
+            // 否则如果启用了同步消息，且控制台令牌不为空，且为群消息时
+            else if (server.consoleToken.isNotEmpty() && server.syncMessage && this is GroupMessageEvent) {
                 try {
                     OpenCommandApi.runCommand(
                         server.address,
