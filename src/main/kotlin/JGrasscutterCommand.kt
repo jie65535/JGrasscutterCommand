@@ -32,6 +32,7 @@ import net.mamoe.mirai.message.data.MessageSource.Key.quote
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.data.firstIsInstance
 import net.mamoe.mirai.message.data.firstIsInstanceOrNull
+import top.jie65535.mirai.model.Server
 import top.jie65535.mirai.model.User
 import top.jie65535.mirai.opencommand.OpenCommandApi
 import java.time.LocalDateTime
@@ -108,94 +109,17 @@ object JGrasscutterCommand : KotlinPlugin(
                 // 发送验证码，并提示要求回复验证码
                 sendCode(server.address, user)
             }
+            // 处理执行游戏控制台命令
+            else if (message.startsWith(PluginConfig.opCommandPrefix)) {
+                message = message.removePrefix(PluginConfig.opCommandPrefix).trim()
+                if (message.isEmpty()) return@subscribeAlways
+                runOpMessageHandler(server, message)
+            }
             // 处理执行游戏命令
             else if (message.startsWith(PluginConfig.commandPrefix)) {
                 message = message.removePrefix(PluginConfig.commandPrefix).trim()
-                if (message.isEmpty()) {
-                    return@subscribeAlways
-                }
-
-                // 检查是否使用别名
-                val sp = message.indexOf(' ')
-                var command = if (sp > 0) { // 如果中间存在空格，则取空格前的内容匹配别名，空格后的内容作为参数附加到命令
-                    PluginConfig.commandAlias[message.substring(0 until sp)]
-                } else {
-                    PluginConfig.commandAlias[message]
-                }
-                command = if (command.isNullOrEmpty()) {
-                    message
-                } else {
-                    if (sp in 1 until message.length-1) { // 如果命令存在额外参数
-                        val args = message.substring(sp+1)
-                        command.replace("|", "$args\n") + args // 为每一行附加参数
-                    } else {
-                        command.replace('|', '\n') // 若为多行命令，替换为换行
-                    }
-                }
-
-                // 执行的用户
-                var user: User? = null
-                // 获取token
-                // 若设置了控制台令牌，则验证是否为管理员执行
-                val token = if (server.consoleToken.isNotEmpty() && PluginConfig.administrators.contains(sender.id)) {
-                    logger.info("管理员 ${sender.nameCardOrNick}(${sender.id}) 执行命令：$command")
-                    // 设置控制台令牌
-                    server.consoleToken
-                } else {
-                    // 普通用户
-                    user = PluginData.users.find { it.id == sender.id && it.serverId == server.id }
-                    if (user == null || user.token.isEmpty()) {
-                        if (server.consoleToken.isNotEmpty()                         // 仅服务器绑定了控制台令牌时
-                            && (PluginConfig.publicCommands.contains(command)        // 检测执行的命令是否为公开命令
-                                    || PluginConfig.publicCommands.contains(message) // 检测执行命令的原文是否为公开命令
-                                    )) {
-                            // 允许游客执行控制台命令
-                            logger.info("游客用户 ${sender.nameCardOrNick}(${sender.id}) 执行公开命令：$command")
-                            server.consoleToken
-                        } else {
-                            return@subscribeAlways
-                        }
-                    } else {
-                        logger.info("用户 ${sender.nameCardOrNick}(${sender.id}) 执行命令：$command")
-                        // 使用用户缓存令牌
-                        user.token
-                    }
-                }
-
-                try {
-                    // 调用接口执行命令
-                    val response = OpenCommandApi.runCommands(server.address, token, command)
-                    subject.sendMessage(this.message.quote() + response)
-                    if (user != null) {
-                        // 计数并更新最后运行时间
-                        ++user.runCount
-                        user.lastRunTime = LocalDateTime.now()
-                    }
-                } catch (e: OpenCommandApi.InvokeException) {
-                    when (e.code) {
-                        404 -> {
-                            subject.sendMessage(this.message.quote() + "玩家不存在或未上线")
-                        }
-                        403 -> {
-                            logger.warning("${sender.nameCardOrNick}(${sender.id}) 的命令执行失败，服务器已收到命令，但不做处理，可能是未验证通过")
-                            // 403不理会用户
-                        }
-                        401 -> {
-                            logger.warning("${sender.nameCardOrNick}(${sender.id}) 的命令执行失败，未授权或已过期的令牌，可以修改插件配置以延长令牌过期时间")
-                            subject.sendMessage(this.message.quote() + "令牌未授权或已过期，请重新绑定账号以更新令牌")
-                            // TODO 此处可以重新发送验证码要求验证，但目前直接报错并要求重新绑定
-                        }
-                        500 -> {
-                            logger.warning("${sender.nameCardOrNick}(${sender.id}) 的命令执行失败，服务器内部错误：${e.message}")
-                            subject.sendMessage(this.message.quote() + "服务器内部发生错误，命令执行失败")
-                        }
-                        else -> {
-                            logger.warning("${sender.nameCardOrNick}(${sender.id}) 的命令执行失败，发生预期外异常：${e.message}")
-                        }
-                    }
-                } catch (e: Throwable) {
-                    logger.warning("${sender.nameCardOrNick}(${sender.id}) 在执行命令时发生异常", e)
-                }
+                if (message.isEmpty()) return@subscribeAlways
+                runMessageHandler(server, message)
             }
             // 否则如果启用了同步消息，且控制台令牌不为空，且为群消息时
             else if (server.consoleToken.isNotEmpty() && server.syncMessage && this is GroupMessageEvent) {
@@ -282,5 +206,129 @@ object JGrasscutterCommand : KotlinPlugin(
             logger.warning("发送验证码出现预期外的异常", e)
             if (e.message != null) subject.sendMessage(message.quote() + e.message!!)
         }
+    }
+
+    /**
+     * 消息转为命令（主要识别消息是否包含别名）
+     * @param message 要执行命令的消息原文
+     * @return 处理后的命令文本
+     */
+    private fun toCommands(message: String): String {
+        // 检查是否使用别名
+        val sp = message.indexOf(' ')
+        val command = if (sp > 0) { // 如果中间存在空格，则取空格前的内容匹配别名，空格后的内容作为参数附加到命令
+            PluginConfig.commandAlias[message.substring(0 until sp)]
+        } else {
+            PluginConfig.commandAlias[message]
+        }
+        return if (command.isNullOrEmpty()) {
+            message
+        } else {
+            if (sp in 1 until message.length-1) { // 如果命令存在额外参数
+                val args = message.substring(sp)
+                command.replace("|", "$args\n") + args // 为每一行附加参数
+            } else {
+                command.replace('|', '\n') // 若为多行命令，替换为换行
+            }
+        }
+    }
+
+    /**
+     * 执行命令消息处理器
+     * @param server 执行的服务器
+     * @param message 执行的命令消息
+     */
+    private suspend fun MessageEvent.runMessageHandler(server: Server, message: String) {
+        val commands = toCommands(message)
+
+        // 执行的用户
+        val user: User? = PluginData.users.find { it.id == sender.id && it.serverId == server.id }
+        val token = if (user == null || user.token.isEmpty()) {
+            if (server.consoleToken.isEmpty()) // 如果未找到用户且控制台令牌未设置，则直接忽略
+                return
+            // 检查执行者是否为管理员
+            if (PluginConfig.administrators.contains(sender.id)) {
+                logger.info("管理员 ${sender.nameCardOrNick}(${sender.id}) 执行命令：$commands")
+                // 设置控制台令牌
+                server.consoleToken
+            } else if (PluginConfig.publicCommands.contains(commands) // 检测执行的命令是否为公开命令
+                || PluginConfig.publicCommands.contains(message)     // 检测执行命令的原文是否为公开命令
+            ) {
+                // 允许游客执行控制台命令
+                logger.info("游客用户 ${sender.nameCardOrNick}(${sender.id}) 执行公开命令：$commands")
+                server.consoleToken
+            } else {
+                return
+            }
+        } else {
+            logger.info("用户 ${sender.nameCardOrNick}(${sender.id}) 执行命令：$commands")
+            // 使用用户缓存令牌
+            user.token
+        }
+
+        // 运行命令
+        if (runCommands(server.address, token, commands) && user != null) {
+            // 计数并更新最后运行时间
+            ++user.runCount
+            user.lastRunTime = LocalDateTime.now()
+        }
+    }
+
+    /**
+     * 执行管理员命令消息处理器
+     * @param server 执行的服务器
+     * @param message 执行的命令消息
+     */
+    private suspend fun MessageEvent.runOpMessageHandler(server: Server, message: String) {
+        // 如果未设置控制台令牌，则直接忽略
+        if (server.consoleToken.isEmpty())
+            return
+        // 如果用户不是管理员，也直接忽略（可提示，但没必要）
+        if (!PluginConfig.administrators.contains(sender.id))
+            return
+        val commands = toCommands(message)
+        logger.info("管理员 ${sender.nameCardOrNick}(${sender.id}) 执行命令：$commands")
+        runCommands(server.address, server.consoleToken, commands)
+    }
+
+    /**
+     * 运行命令并向执行者发送结果
+     * @param host 服务器地址
+     * @param token 令牌
+     * @param commands 命令行
+     * @return 返回是否正常执行
+     */
+    private suspend fun MessageEvent.runCommands(host: String, token: String, commands: String): Boolean {
+        try {
+            // 调用接口执行命令
+            val response = OpenCommandApi.runCommands(host, token, commands)
+            subject.sendMessage(this.message.quote() + response)
+            return true
+        } catch (e: OpenCommandApi.InvokeException) {
+            when (e.code) {
+                404 -> {
+                    subject.sendMessage(this.message.quote() + "玩家不存在或未上线")
+                }
+                403 -> {
+                    logger.warning("${sender.nameCardOrNick}(${sender.id}) 的命令执行失败，服务器已收到命令，但不做处理，可能是未验证通过")
+                    // 403不理会用户
+                }
+                401 -> {
+                    logger.warning("${sender.nameCardOrNick}(${sender.id}) 的命令执行失败，未授权或已过期的令牌，可以修改插件配置以延长令牌过期时间")
+                    subject.sendMessage(this.message.quote() + "令牌未授权或已过期，请重新绑定账号以更新令牌")
+                    // TODO 此处可以重新发送验证码要求验证，但目前直接报错并要求重新绑定
+                }
+                500 -> {
+                    logger.warning("${sender.nameCardOrNick}(${sender.id}) 的命令执行失败，服务器内部错误：${e.message}")
+                    subject.sendMessage(this.message.quote() + "服务器内部发生错误，命令执行失败")
+                }
+                else -> {
+                    logger.warning("${sender.nameCardOrNick}(${sender.id}) 的命令执行失败，发生预期外异常：${e.message}")
+                }
+            }
+        } catch (e: Throwable) {
+            logger.warning("${sender.nameCardOrNick}(${sender.id}) 在执行命令时发生异常", e)
+        }
+        return false
     }
 }

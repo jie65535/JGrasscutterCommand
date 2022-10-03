@@ -34,6 +34,9 @@ object PluginConfig : AutoSavePluginConfig("config") {
             "示例2：!位置\n")
     var commandPrefix: String by value("!")
 
+    @ValueDescription("执行GC控制台命令前缀，用法与普通版本相同，区别是仅管理员可用")
+    var opCommandPrefix: String by value("op")
+
     @ValueDescription("命令别名")
     val commandAlias: MutableMap<String, String> by value(mutableMapOf(
         "无敌" to "prop god on",

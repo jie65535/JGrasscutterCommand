@@ -106,6 +106,16 @@ give 203 999
 
 然后通过别名批量执行命令，例如：`!新手礼包`
 
+---
+
+v0.4.0 开始，你可以在别名后跟额外参数，会附加到每一行命令，例如：`!新手礼包 @张三`
+
+将会执行
+```shell
+give 102 9999 @10001
+give 202 99 @10001
+give 203 99 @10001
+```
 
 ## 私聊执行
 v0.3.0 开始，玩家可以**私聊机器人**进行账号的绑定和命令的执行，
@@ -143,6 +153,8 @@ bindCommand: 绑定
 # 示例1：!give 1096 lv90
 # 示例2：!位置
 commandPrefix: !
+# 执行GC控制台命令前缀，用法与普通版本相同，区别是仅管理员可用
+opCommandPrefix: op
 # 命令别名
 commandAlias: 
   无敌: 'prop god on'
@@ -170,6 +182,7 @@ defaultServerId: 1
 /jgc help       # 插件命令用法
 /jgc reload     # 重载插件配置
 /jgc setCommandPrefix <prefix>      # 设置执行GC命令前缀
+/jgc setOpCommandPrefix <prefix>    # 设置执行GC控制台命令前缀
 /jgc setBindCommand <prefix>        # 设置绑定命令前缀
 /jgc op <user>          # 设置管理员
 /jgc setAdmin <user>    # 设置管理员

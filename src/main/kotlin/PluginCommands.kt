@@ -49,10 +49,22 @@ object PluginCommands : CompositeCommand(
     @Description("设置执行GC命令前缀")
     suspend fun CommandSender.setCommandPrefix(prefix: String) {
         if (prefix.isEmpty()) {
-            sendMessage("前缀不能为空，这会导致每条消息都作为命令处理")
+            sendMessage("前缀不能为空")
         } else {
             logger.info("设置执行GC命令前缀为 $prefix")
             PluginConfig.commandPrefix = prefix
+            sendMessage("OK")
+        }
+    }
+
+    @SubCommand
+    @Description("设置执行GC控制台命令前缀")
+    suspend fun CommandSender.setOpCommandPrefix(prefix: String) {
+        if (prefix.isEmpty()) {
+            sendMessage("前缀不能为空")
+        } else {
+            logger.info("设置执行GC控制台命令前缀为 $prefix")
+            PluginConfig.opCommandPrefix = prefix
             sendMessage("OK")
         }
     }
