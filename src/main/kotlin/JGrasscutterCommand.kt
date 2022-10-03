@@ -189,7 +189,7 @@ object JGrasscutterCommand : KotlinPlugin(
             // 否则如果启用了同步消息，且控制台令牌不为空，且为群消息时
             else if (server.consoleToken.isNotEmpty() && server.syncMessage && this is GroupMessageEvent) {
                 try {
-                    OpenCommandApi.runCommands(
+                    OpenCommandApi.runCommand(
                         server.address,
                         server.consoleToken,
                         "say <color=green>${sender.nameCardOrNick}</color>:\n${this.message.contentToString()}")

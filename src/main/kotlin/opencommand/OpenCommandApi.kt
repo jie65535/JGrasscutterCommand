@@ -140,6 +140,19 @@ object OpenCommandApi {
 
     /**
      * 运行命令，成功时返回命令执行结果，失败时抛出异常，异常详情参考doRequest描述
+     * @param host 服务器地址
+     * @param token 持久令牌
+     * @param command 命令行
+     * @return 命令执行结果
+     * @see doRequest
+     */
+    suspend fun runCommand(host: String, token: String, command: String): String {
+        val ret = doRequest(host, json.encodeToString(CommandRequest(token, command)))
+        return if (ret.isNullOrEmpty()) "OK" else ret
+    }
+
+    /**
+     * 运行命令，成功时返回命令执行结果，失败时抛出异常，异常详情参考doRequest描述
      * 允许单次执行多条命令，用换行(\n)分隔
      * @param host 服务器地址
      * @param token 持久令牌
