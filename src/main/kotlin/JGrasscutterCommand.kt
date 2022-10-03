@@ -116,11 +116,22 @@ object JGrasscutterCommand : KotlinPlugin(
                 }
 
                 // 检查是否使用别名
-                var command = PluginConfig.commandAlias[message]
-                command = if (command.isNullOrEmpty())
+                val sp = message.indexOf(' ')
+                var command = if (sp > 0) { // 如果中间存在空格，则取空格前的内容匹配别名，空格后的内容作为参数附加到命令
+                    PluginConfig.commandAlias[message.substring(0 until sp)]
+                } else {
+                    PluginConfig.commandAlias[message]
+                }
+                command = if (command.isNullOrEmpty()) {
                     message
-                else
-                    command.replace('|', '\n') // 若为多行命令，替换为换行
+                } else {
+                    if (sp in 1 until message.length-1) { // 如果命令存在额外参数
+                        val args = message.substring(sp+1)
+                        command.replace("|", "$args\n") + args // 为每一行附加参数
+                    } else {
+                        command.replace('|', '\n') // 若为多行命令，替换为换行
+                    }
+                }
 
                 // 执行的用户
                 var user: User? = null
